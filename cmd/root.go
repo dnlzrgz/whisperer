@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 )
 
 var (
-	sites      []string
 	goroutines string
 	agent      string
 	urls       string
@@ -26,8 +26,15 @@ var rootCmd = &cobra.Command{
 	Use:   "whisperer",
 	Short: "whisperer makes HTTP request constantly in order to generate random HTTP/DNS traffic noise.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := readFile(urls); err != nil {
+		f, err := os.Open(urls)
+		if err != nil {
 			return err
+		}
+		defer f.Close()
+
+		sites, err := readURLS(f)
+		if err != nil {
+			return fmt.Errorf("while reading URLs from %q: %v", urls, err)
 		}
 
 		n, err := strconv.Atoi(goroutines)
@@ -41,28 +48,31 @@ var rootCmd = &cobra.Command{
 		r := rand.New(seed)
 		for {
 			sema <- struct{}{}
-			go func() {
-				defer func() { <-sema }()
-				i := r.Intn(len(sites) - 1)
-				s := sites[i]
+			i := r.Intn(len(sites) - 1)
+			s := sites[i]
 
-				req, err := http.NewRequest(http.MethodGet, s, nil)
-				if err != nil {
-					log.Println(err)
-				}
-				req.Header.Set("User-Agent", agent)
-
-				if verbose {
-					log.Printf("visiting: %q", s)
-				}
-
-				_, err = client.Do(req)
-				if err != nil {
-					log.Println(err)
-				}
-			}()
+			go request(sema, client, s, verbose)
 		}
 	},
+}
+
+func request(tokens <-chan struct{}, c *http.Client, s string, v bool) {
+	defer func() { <-tokens }()
+
+	req, err := http.NewRequest(http.MethodGet, s, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	req.Header.Set("User-Agent", agent)
+
+	if v {
+		log.Printf("visiting: %q", s)
+	}
+
+	_, err = c.Do(req)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func Execute() {
@@ -78,21 +88,16 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enables verbose mode")
 }
 
-func readFile(route string) error {
-	f, err := os.Open(route)
-	if err != nil {
-		return fmt.Errorf("while reading file %v: %v", urls, err)
-	}
-	defer f.Close()
-
-	input := bufio.NewScanner(f)
+func readURLS(r io.Reader) ([]string, error) {
+	urls := []string{}
+	input := bufio.NewScanner(r)
 	for input.Scan() {
-		site := input.Text()
-		if !strings.HasPrefix(site, "https://") {
-			site = "https://" + site
+		url := input.Text()
+		if !strings.HasPrefix(url, "https://") {
+			url = "https://" + url
 		}
-		sites = append(sites, site)
+		urls = append(urls, url)
 	}
 
-	return nil
+	return urls, input.Err()
 }
