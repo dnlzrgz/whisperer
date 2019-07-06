@@ -19,6 +19,7 @@ var (
 	goroutines string
 	agent      string
 	urls       string
+	verbose    bool
 )
 
 var rootCmd = &cobra.Command{
@@ -51,7 +52,10 @@ var rootCmd = &cobra.Command{
 				}
 				req.Header.Set("User-Agent", agent)
 
-				log.Printf("visiting: %q", s)
+				if verbose {
+					log.Printf("visiting: %q", s)
+				}
+
 				_, err = client.Do(req)
 				if err != nil {
 					log.Println(err)
@@ -71,12 +75,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&goroutines, "goroutines", "1", "number of goroutines")
 	rootCmd.PersistentFlags().StringVar(&agent, "agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
 	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enables verbose")
 }
 
 func readFile(route string) error {
 	f, err := os.Open(route)
 	if err != nil {
-		return fmt.Errorf("while reading file %v", urls, err)
+		return fmt.Errorf("while reading file %v: %v", urls, err)
 	}
 	defer f.Close()
 
