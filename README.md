@@ -41,7 +41,7 @@ Flags:
       --goroutines string   number of goroutines (default "1")
   -h, --help                help for whisperer
       --urls string         simple .txt file with URL's to visit (default "./urls.txt")
-
+      --verbose             enables verbose mode
 ```
 
 ## URLs file
