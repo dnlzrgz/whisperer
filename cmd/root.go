@@ -82,10 +82,10 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&goroutines, "goroutines", "1", "number of goroutines")
-	rootCmd.PersistentFlags().StringVar(&agent, "agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
+	rootCmd.PersistentFlags().StringVarP(&goroutines, "goroutines", "g", "1", "number of goroutines")
+	rootCmd.PersistentFlags().StringVarP(&agent, "agent", "a", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
 	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
-	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enables verbose mode")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
 }
 
 func readURLS(r io.Reader) ([]string, error) {
