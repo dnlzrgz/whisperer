@@ -37,11 +37,11 @@ Usage:
   whisperer [flags]
 
 Flags:
-      --agent string        user agent (default "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0")
-      --goroutines string   number of goroutines (default "1")
+  -a, --agent string        user agent (default "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0")
+  -g, --goroutines string   number of goroutines (default "1")
   -h, --help                help for whisperer
       --urls string         simple .txt file with URL's to visit (default "./urls.txt")
-      --verbose             enables verbose mode
+  -v, --verbose             enables verbose mode
 ```
 
 ## URLs file
@@ -54,6 +54,5 @@ This file is from which Whisperer will extract the different URLs that will be v
 
 * Docker image.
 * Tests.
-* Command line arguments.
 
 If you know about anything else I can improve or add please, don't hesitate to let me know!
