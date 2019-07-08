@@ -56,25 +56,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-func request(tokens <-chan struct{}, c *http.Client, s string, v bool) {
-	defer func() { <-tokens }()
-
-	req, err := http.NewRequest(http.MethodGet, s, nil)
-	if err != nil {
-		log.Println(err)
-	}
-	req.Header.Set("User-Agent", agent)
-
-	if v {
-		log.Printf("visiting: %q", s)
-	}
-
-	_, err = c.Do(req)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
@@ -93,6 +74,10 @@ func readURLS(r io.Reader) ([]string, error) {
 	input := bufio.NewScanner(r)
 	for input.Scan() {
 		url := input.Text()
+		if url == "" {
+			continue
+		}
+
 		if !strings.HasPrefix(url, "https://") {
 			url = "https://" + url
 		}
@@ -100,4 +85,23 @@ func readURLS(r io.Reader) ([]string, error) {
 	}
 
 	return urls, input.Err()
+}
+
+func request(tokens <-chan struct{}, c *http.Client, url string, v bool) {
+	defer func() { <-tokens }()
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	req.Header.Set("User-Agent", agent)
+
+	if v {
+		log.Printf("visiting: %q", url)
+	}
+
+	_, err = c.Do(req)
+	if err != nil {
+		log.Println(err)
+	}
 }
