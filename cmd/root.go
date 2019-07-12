@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,11 +15,20 @@ import (
 )
 
 var (
-	goroutines string
 	agent      string
+	delay      time.Duration
+	goroutines int
 	urls       string
 	verbose    bool
 )
+
+func init() {
+	rootCmd.PersistentFlags().StringVarP(&agent, "agent", "a", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
+	rootCmd.PersistentFlags().DurationVarP(&delay, "delay", "d", 0, "delay between requests")
+	rootCmd.PersistentFlags().IntVarP(&goroutines, "goroutines", "g", 1, "number of goroutines")
+	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "whisperer",
@@ -37,13 +45,8 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("while reading URLs from %q: %v", urls, err)
 		}
 
-		n, err := strconv.Atoi(goroutines)
-		if err != nil {
-			return err
-		}
-
 		client := &http.Client{}
-		sema := make(chan struct{}, n)
+		sema := make(chan struct{}, goroutines)
 		seed := rand.NewSource(time.Now().Unix())
 		r := rand.New(seed)
 		for {
@@ -51,7 +54,21 @@ var rootCmd = &cobra.Command{
 			i := r.Intn(len(sites) - 1)
 			s := sites[i]
 
-			go request(sema, client, s, verbose)
+			go func(site string) {
+				defer func() {
+					time.Sleep(delay)
+					<-sema
+				}()
+
+				status, err := request(client, site)
+				if err != nil {
+					log.Printf("while making a request for %v: %v", site, err)
+				}
+
+				if verbose {
+					log.Printf("visited %v - %v", site, status)
+				}
+			}(s)
 		}
 	},
 }
@@ -60,13 +77,6 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func init() {
-	rootCmd.PersistentFlags().StringVarP(&goroutines, "goroutines", "g", "1", "number of goroutines")
-	rootCmd.PersistentFlags().StringVarP(&agent, "agent", "a", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
-	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
 }
 
 func readURLS(r io.Reader) ([]string, error) {
@@ -87,21 +97,17 @@ func readURLS(r io.Reader) ([]string, error) {
 	return urls, input.Err()
 }
 
-func request(tokens <-chan struct{}, c *http.Client, url string, v bool) {
-	defer func() { <-tokens }()
-
+func request(c *http.Client, url string) (int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		log.Println(err)
+		return 0, err
 	}
 	req.Header.Set("User-Agent", agent)
 
-	if v {
-		log.Printf("visiting: %q", url)
+	resp, err := c.Do(req)
+	if err != nil {
+		return 0, err
 	}
 
-	_, err = c.Do(req)
-	if err != nil {
-		log.Println(err)
-	}
+	return resp.StatusCode, nil
 }
