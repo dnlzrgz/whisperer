@@ -4,6 +4,12 @@ Whisperer is a simple Go program that makes HTTP request constantly in order to 
 
 > Whisperer is a project inspired by [Noisy](https://github.com/1tayH/noisy).
 
+## Example
+
+```bash
+whisperer -v -d 3s
+```
+
 ## Install
 
 ### Go
@@ -23,6 +29,37 @@ cd whisperer
 
 # Run
 go run main.go
+```
+
+## Docker
+
+### Pulling Image
+
+To use whisperer as a Docker container you can pull the image with the following command:
+
+```bash
+docker image pull danielkvist/whisperer
+```
+
+> Note that the image ```danielkvist/whisperer``` uses the urls file from this repository. So it is not a valid option if you want to customize the URLs that whisperer is going to visit.
+
+### Building Image
+
+```bash
+# First, clone the repository
+git clone https://github.com/danielkvist/whisperer
+
+# Then navigate into the whisperer directory
+cd whisperer
+
+# Modify the urls.txt file if you want
+vim urls.txt
+
+# Build the Docker Image from the Dockerfile inside the repository
+docker image build -t whisperer .
+
+# Run
+docker container run whisperer
 ```
 
 ## Options
@@ -51,9 +88,6 @@ This file is from which Whisperer will extract the different URLs that will be v
 
 > You can see an example of how this file should be [here](https://github.com/danielkvist/whisperer/blob/master/urls.txt).
 
-## Things to implement/improve
-
-* Docker image.
-* Tests.
+## Help is always welcome!
 
 If you know about anything else I can improve or add please, don't hesitate to let me know!
