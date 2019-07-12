@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -56,4 +59,53 @@ func TestReadURLS(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRequest(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+		switch r.URL.String() {
+		case "/ok":
+			w.WriteHeader(http.StatusOK)
+		case "/error":
+			w.WriteHeader(http.StatusInternalServerError)
+		case "/404":
+			w.WriteHeader(http.StatusNotFound)
+		}
+		fmt.Fprintln(w, "Hello, client")
+	}))
+	defer ts.Close()
+
+	tt := []struct {
+		url            string
+		expectedStatus int
+	}{
+		{
+			ts.URL + "/ok",
+			http.StatusOK,
+		},
+		{
+			ts.URL + "/error",
+			http.StatusInternalServerError,
+		},
+		{
+			ts.URL + "/404",
+			http.StatusNotFound,
+		},
+	}
+
+	client := &http.Client{}
+	for _, tc := range tt {
+		t.Run(tc.url, func(t *testing.T) {
+			status, err := request(client, tc.url)
+			if err != nil {
+				t.Fatalf("while making a request to %v: %v", tc.url, err)
+			}
+
+			if status != tc.expectedStatus {
+				t.Fatalf("expected status code to be %v. got=%v", tc.expectedStatus, status)
+			}
+		})
+	}
+
 }
