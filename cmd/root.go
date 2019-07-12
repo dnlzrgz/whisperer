@@ -63,6 +63,7 @@ var rootCmd = &cobra.Command{
 				status, err := request(client, site)
 				if err != nil {
 					log.Printf("while making a request for %v: %v", site, err)
+					return
 				}
 
 				if verbose {
