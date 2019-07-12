@@ -74,12 +74,13 @@ Usage:
   whisperer [flags]
 
 Flags:
-  -a, --agent string     user agent (default "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0")
-  -d, --delay duration   delay between requests
-  -g, --goroutines int   number of goroutines (default 1)
-  -h, --help             help for whisperer
-      --urls string      simple .txt file with URL's to visit (default "./urls.txt")
-  -v, --verbose          enables verbose mode
+  -a, --agent string       user agent (default "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0")
+  -d, --delay duration     delay between requests (default 1s)
+  -g, --goroutines int     number of goroutines (default 1)
+  -h, --help               help for whisperer
+  -t, --timeout duration   max time to wait for a response before canceling the request (default 3s)
+      --urls string        simple .txt file with URL's to visit (default "./urls.txt")
+  -v, --verbose            enables verbose mode
 ```
 
 ## URLs file
