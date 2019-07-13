@@ -46,6 +46,10 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("while reading URLs from %q: %v", urls, err)
 		}
+		sites_len := len(sites)
+		if sites_len == 0 {
+			return fmt.Errorf("no URLs in %q", urls)
+		}
 
 		client := &http.Client{Timeout: timeout}
 		sema := make(chan struct{}, goroutines)
@@ -53,7 +57,7 @@ var rootCmd = &cobra.Command{
 		r := rand.New(seed)
 		for {
 			sema <- struct{}{}
-			i := r.Intn(len(sites) - 1)
+			i := r.Intn(sites_len)
 			s := sites[i]
 
 			go func(site string) {
