@@ -47,13 +47,17 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("while reading URLs from %q: %v", urls, err)
 		}
 
+		if len(sites) == 0 {
+			return fmt.Errorf("there is no valid URL in the file %v", urls)
+		}
+
 		client := &http.Client{Timeout: timeout}
 		sema := make(chan struct{}, goroutines)
 		seed := rand.NewSource(time.Now().Unix())
 		r := rand.New(seed)
 		for {
 			sema <- struct{}{}
-			i := r.Intn(len(sites) - 1)
+			i := r.Intn(len(sites))
 			s := sites[i]
 
 			go func(site string) {
