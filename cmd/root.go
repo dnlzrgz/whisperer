@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/danielkvist/whisperer/logger"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,6 +53,8 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("there is no valid URL in the file %v", urls)
 		}
 
+		l := logger.New(os.Stdout, goroutines)
+
 		client := &http.Client{Timeout: timeout}
 		sema := make(chan struct{}, goroutines)
 		seed := rand.NewSource(time.Now().Unix())
@@ -61,19 +65,15 @@ var rootCmd = &cobra.Command{
 			s := sites[i]
 
 			go func(site string) {
-				defer func() {
-					time.Sleep(delay)
-					<-sema
-				}()
-
-				status, err := request(client, site)
+				defer delayRequest(delay, sema)
+				code, _, err := request(client, site)
 				if err != nil {
 					log.Printf("while making a request for %v: %v", site, err)
 					return
 				}
 
 				if verbose {
-					log.Printf("visited %v - %v", site, status)
+					l.Println(site + " - " + code)
 				}
 			}(s)
 		}
@@ -104,17 +104,22 @@ func readURLS(r io.Reader) ([]string, error) {
 	return urls, input.Err()
 }
 
-func request(c *http.Client, url string) (int, error) {
+func delayRequest(d time.Duration, sema <-chan struct{}) {
+	time.Sleep(d)
+	<-sema
+}
+
+func request(c *http.Client, url string) (string, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 	req.Header.Set("User-Agent", agent)
 
 	resp, err := c.Do(req)
 	if err != nil {
-		return 0, err
+		return "", 0, err
 	}
 
-	return resp.StatusCode, nil
+	return resp.Status, resp.StatusCode, nil
 }
