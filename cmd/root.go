@@ -54,6 +54,9 @@ var rootCmd = &cobra.Command{
 		}
 
 		l := logger.New(os.Stdout, goroutines)
+		if !verbose {
+			l.Stop()
+		}
 
 		client := &http.Client{Timeout: timeout}
 		sema := make(chan struct{}, goroutines)
