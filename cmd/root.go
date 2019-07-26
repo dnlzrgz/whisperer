@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -18,17 +19,21 @@ import (
 
 var (
 	agent      string
+	debug      bool
 	delay      time.Duration
 	goroutines int
 	timeout    time.Duration
+	proxy      string
 	urls       string
 	verbose    bool
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&agent, "agent", "a", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "prints error messages")
 	rootCmd.PersistentFlags().DurationVarP(&delay, "delay", "d", 1*time.Second, "delay between requests")
 	rootCmd.PersistentFlags().IntVarP(&goroutines, "goroutines", "g", 1, "number of goroutines")
+	rootCmd.PersistentFlags().StringVarP(&proxy, "proxy", "p", "", "proxy URL")
 	rootCmd.PersistentFlags().DurationVarP(&timeout, "timeout", "t", 3*time.Second, "max time to wait for a response before canceling the request")
 	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
@@ -59,6 +64,12 @@ var rootCmd = &cobra.Command{
 		}
 
 		client := &http.Client{Timeout: timeout}
+		if proxy != "" {
+			if err := clientWithProxy(client, proxy); err != nil {
+				log.Fatal(err)
+			}
+		}
+
 		sema := make(chan struct{}, goroutines)
 		seed := rand.NewSource(time.Now().Unix())
 		r := rand.New(seed)
@@ -71,7 +82,9 @@ var rootCmd = &cobra.Command{
 				defer delayRequest(delay, sema)
 				code, _, err := request(client, site)
 				if err != nil {
-					log.Printf("while making a request for %v: %v", site, err)
+					if debug {
+						log.Printf("while making a request for %v: %v", site, err)
+					}
 					return
 				}
 
@@ -105,6 +118,17 @@ func readURLS(r io.Reader) ([]string, error) {
 	}
 
 	return urls, input.Err()
+}
+
+func clientWithProxy(c *http.Client, proxy string) error {
+	proxyURL, err := url.Parse(proxy)
+	if err != nil {
+		return err
+	}
+
+	tr := &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+	c.Transport = tr
+	return nil
 }
 
 func delayRequest(d time.Duration, sema <-chan struct{}) {

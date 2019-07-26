@@ -1,5 +1,10 @@
 # Whisperer
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/danielkvist/whisperer)](https://goreportcard.com/report/github.com/danielkvist/whisperer)
+[![GoDoc](https://godoc.org/github.com/danielkvist/whisperer?status.svg)](https://godoc.org/github.com/danielkvist/whisperer)
+[![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/whisperer.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/whisperer/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 Whisperer is a simple Go program that makes HTTP request constantly in order to generate random HTTP/DNS traffic noise.
 
 > Whisperer is a project inspired by [Noisy](https://github.com/1tayH/noisy).
@@ -75,9 +80,11 @@ Usage:
 
 Flags:
   -a, --agent string       user agent (default "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0")
+      --debug              prints error messages
   -d, --delay duration     delay between requests (default 1s)
   -g, --goroutines int     number of goroutines (default 1)
   -h, --help               help for whisperer
+  -p, --proxy string       proxy URL
   -t, --timeout duration   max time to wait for a response before canceling the request (default 3s)
       --urls string        simple .txt file with URL's to visit (default "./urls.txt")
   -v, --verbose            enables verbose mode
