@@ -76,20 +76,7 @@ var rootCmd = &cobra.Command{
 			i := r.Intn(len(sites))
 			s := sites[i]
 
-			go func(site string) {
-				defer delayRequest(delay, sema)
-				code, _, err := request(c, site)
-				if err != nil {
-					if debug {
-						log.Printf("while making a request for %v: %v", site, err)
-					}
-					return
-				}
-
-				if verbose {
-					l.Println(site + " - " + code)
-				}
-			}(s)
+			go visit(s, c, agent, delay, verbose, debug, sema, l)
 		}
 	},
 }
@@ -118,12 +105,25 @@ func readURLS(r io.Reader) ([]string, error) {
 	return urls, input.Err()
 }
 
-func delayRequest(d time.Duration, sema <-chan struct{}) {
-	time.Sleep(d)
-	<-sema
+func visit(site string, c *http.Client, agent string, delay time.Duration, verbose bool, debug bool, sema <-chan struct{}, l *logger.Logger) {
+	time.Sleep(delay)
+	defer func() { <-sema }()
+
+	code, _, err := request(c, site, agent)
+	if err != nil {
+		if debug {
+			log.Printf("while making a request: %v", err)
+		}
+
+		return
+	}
+
+	if verbose {
+		l.Println(site + " - " + code)
+	}
 }
 
-func request(c *http.Client, url string) (string, int, error) {
+func request(c *http.Client, url string, agent string) (string, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", 0, err

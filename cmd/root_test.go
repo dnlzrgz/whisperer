@@ -97,7 +97,7 @@ func TestRequest(t *testing.T) {
 	client := &http.Client{}
 	for _, tc := range tt {
 		t.Run(tc.url, func(t *testing.T) {
-			_, status, err := request(client, tc.url)
+			_, status, err := request(client, tc.url, "")
 			if err != nil {
 				t.Fatalf("while making a request to %v: %v", tc.url, err)
 			}
