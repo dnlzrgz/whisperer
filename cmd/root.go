@@ -7,11 +7,11 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/danielkvist/whisperer/client"
 	"github.com/danielkvist/whisperer/logger"
 
 	"github.com/spf13/cobra"
@@ -63,11 +63,9 @@ var rootCmd = &cobra.Command{
 			l.Stop()
 		}
 
-		client := &http.Client{Timeout: timeout}
-		if proxy != "" {
-			if err := clientWithProxy(client, proxy); err != nil {
-				log.Fatal(err)
-			}
+		c, err := client.New(client.WithProxy(proxy), client.WithTimeout(timeout))
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		sema := make(chan struct{}, goroutines)
@@ -80,7 +78,7 @@ var rootCmd = &cobra.Command{
 
 			go func(site string) {
 				defer delayRequest(delay, sema)
-				code, _, err := request(client, site)
+				code, _, err := request(c, site)
 				if err != nil {
 					if debug {
 						log.Printf("while making a request for %v: %v", site, err)
@@ -118,17 +116,6 @@ func readURLS(r io.Reader) ([]string, error) {
 	}
 
 	return urls, input.Err()
-}
-
-func clientWithProxy(c *http.Client, proxy string) error {
-	proxyURL, err := url.Parse(proxy)
-	if err != nil {
-		return err
-	}
-
-	tr := &http.Transport{Proxy: http.ProxyURL(proxyURL)}
-	c.Transport = tr
-	return nil
 }
 
 func delayRequest(d time.Duration, sema <-chan struct{}) {
