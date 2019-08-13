@@ -85,6 +85,7 @@ Flags:
   -g, --goroutines int     number of goroutines (default 1)
   -h, --help               help for whisperer
   -p, --proxy string       proxy URL
+  -r, --random             random delay between requests
   -t, --timeout duration   max time to wait for a response before canceling the request (default 3s)
       --urls string        simple .txt file with URL's to visit (default "./urls.txt")
   -v, --verbose            enables verbose mode
