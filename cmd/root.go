@@ -24,6 +24,7 @@ var (
 	goroutines int
 	timeout    time.Duration
 	proxy      string
+	rDelay     bool
 	urls       string
 	verbose    bool
 )
@@ -34,6 +35,7 @@ func init() {
 	rootCmd.PersistentFlags().DurationVarP(&delay, "delay", "d", 1*time.Second, "delay between requests")
 	rootCmd.PersistentFlags().IntVarP(&goroutines, "goroutines", "g", 1, "number of goroutines")
 	rootCmd.PersistentFlags().StringVarP(&proxy, "proxy", "p", "", "proxy URL")
+	rootCmd.PersistentFlags().BoolVarP(&rDelay, "random", "r", false, "random delay between requests")
 	rootCmd.PersistentFlags().DurationVarP(&timeout, "timeout", "t", 3*time.Second, "max time to wait for a response before canceling the request")
 	rootCmd.PersistentFlags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
@@ -76,7 +78,8 @@ var rootCmd = &cobra.Command{
 			i := r.Intn(len(sites))
 			s := sites[i]
 
-			go visit(s, c, agent, delay, verbose, debug, sema, l)
+			d := randomDelay(delay, rDelay)
+			go visit(s, c, agent, d, verbose, debug, sema, l)
 		}
 	},
 }
@@ -136,4 +139,13 @@ func request(c *http.Client, url string, agent string) (string, int, error) {
 	}
 
 	return resp.Status, resp.StatusCode, nil
+}
+
+func randomDelay(delay time.Duration, randomDelay bool) time.Duration {
+	if !randomDelay {
+		return delay
+	}
+
+	r := rand.Intn(int(delay))
+	return time.Duration(r)
 }
