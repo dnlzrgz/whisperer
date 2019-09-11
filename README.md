@@ -1,6 +1,7 @@
 # Whisperer
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/danielkvist/whisperer)](https://goreportcard.com/report/github.com/danielkvist/whisperer)
+[![CircleCI](https://circleci.com/gh/danielkvist/whisperer.svg?style=svg)](https://circleci.com/gh/danielkvist/whisperer)
 [![GoDoc](https://godoc.org/github.com/danielkvist/whisperer?status.svg)](https://godoc.org/github.com/danielkvist/whisperer)
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielkvist/whisperer.svg?maxAge=604800)](https://hub.docker.com/r/danielkvist/whisperer/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
