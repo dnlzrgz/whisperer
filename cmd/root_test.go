@@ -78,26 +78,26 @@ func TestRequest(t *testing.T) {
 
 	tt := []struct {
 		url            string
-		expectedStatus int
+		expectedStatus string
 	}{
 		{
 			ts.URL + "/ok",
-			http.StatusOK,
+			"200 OK",
 		},
 		{
 			ts.URL + "/error",
-			http.StatusInternalServerError,
+			"500 Internal Server Error",
 		},
 		{
 			ts.URL + "/404",
-			http.StatusNotFound,
+			"404 Not Found",
 		},
 	}
 
 	client := &http.Client{}
 	for _, tc := range tt {
 		t.Run(tc.url, func(t *testing.T) {
-			_, status, err := request(client, tc.url, "")
+			status, err := request(client, tc.url, "")
 			if err != nil {
 				t.Fatalf("while making a request to %v: %v", tc.url, err)
 			}
