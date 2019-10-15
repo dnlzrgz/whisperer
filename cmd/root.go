@@ -31,6 +31,10 @@ func Root() *cobra.Command {
 		Use:   "whisperer",
 		Short: "whisperer makes HTTP request constantly in order to generate random HTTP/DNS traffic noise.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if goroutines <= 0 {
+				return fmt.Errorf("number of goroutines cannot be less or equal to 0")
+			}
+
 			f, err := os.Open(urls)
 			if err != nil {
 				return err
@@ -63,6 +67,7 @@ func Root() *cobra.Command {
 				go visit(s, c, agent, d, verbose, debug, sema)
 			}
 		},
+		SilenceUsage: true,
 	}
 
 	root.Flags().StringVarP(&agent, "agent", "a", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0", "user agent")
