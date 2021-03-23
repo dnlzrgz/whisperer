@@ -92,8 +92,16 @@ func readURLS(r io.Reader) ([]string, error) {
 			continue
 		}
 
-		if !strings.HasPrefix(url, "https://") {
-			url = "https://" + url
+		idx := strings.Index(url, "://")
+		if idx < 0 {
+			url = "https://" + url // default https
+		} else if idx == 0 {
+			log.Printf("there is no valid scheme in url '%v'\n", url)
+			continue
+		}
+		if !strings.HasPrefix(url, "http") {
+			log.Printf("this is not supported scheme '%v'\n", url)
+			continue
 		}
 		urls = append(urls, url)
 	}
