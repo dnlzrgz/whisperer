@@ -25,6 +25,11 @@ func TestReadURLS(t *testing.T) {
 			[]string{"https://amazon.com"},
 		},
 		{
+			"with http",
+			"http://amazon.com",
+			[]string{"http://amazon.com"},
+		},
+		{
 			"empty",
 			"",
 			[]string{},
