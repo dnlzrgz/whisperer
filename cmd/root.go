@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -24,6 +25,7 @@ func Root() *cobra.Command {
 	var timeout time.Duration
 	var proxy string
 	var rDelay bool
+	var skipVerify bool
 	var urls string
 	var verbose bool
 
@@ -64,7 +66,7 @@ func Root() *cobra.Command {
 				s := sites[i]
 
 				d := randomDelay(delay, rDelay)
-				go visit(s, c, agent, d, verbose, debug, sema)
+				go visit(s, c, agent, skipVerify, d, verbose, debug, sema)
 			}
 		},
 		SilenceUsage: true,
@@ -76,6 +78,7 @@ func Root() *cobra.Command {
 	root.Flags().IntVarP(&goroutines, "goroutines", "g", 1, "number of goroutines")
 	root.Flags().StringVarP(&proxy, "proxy", "p", "", "proxy URL")
 	root.Flags().BoolVarP(&rDelay, "random", "r", false, "random delay between requests")
+	root.Flags().BoolVar(&skipVerify, "skip-tls-verify", false, "disable TLS certificate verification")
 	root.Flags().DurationVarP(&timeout, "timeout", "t", 3*time.Second, "max time to wait for a response before canceling the request")
 	root.Flags().StringVar(&urls, "urls", "./urls.txt", "simple .txt file with URL's to visit")
 	root.Flags().BoolVarP(&verbose, "verbose", "v", false, "enables verbose mode")
@@ -101,13 +104,13 @@ func readURLS(r io.Reader) ([]string, error) {
 	return urls, input.Err()
 }
 
-func visit(site string, c *http.Client, agent string, delay time.Duration, verbose bool, debug bool, sema <-chan struct{}) {
+func visit(site string, c *http.Client, agent string, skipVerify bool, delay time.Duration, verbose bool, debug bool, sema <-chan struct{}) {
 	defer func() {
 		time.Sleep(delay)
 		<-sema
 	}()
 
-	code, err := request(c, site, agent)
+	code, err := request(c, site, agent, skipVerify)
 	if err != nil {
 		if debug {
 			log.Printf("while making a request: %v", err)
@@ -121,12 +124,18 @@ func visit(site string, c *http.Client, agent string, delay time.Duration, verbo
 	}
 }
 
-func request(c *http.Client, url string, agent string) (string, error) {
+func request(c *http.Client, url string, agent string, skipVerify bool) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("User-Agent", agent)
+
+	if skipVerify {
+		c.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
 
 	resp, err := c.Do(req)
 	if err != nil {
